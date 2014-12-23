@@ -45,7 +45,7 @@ function.
     enable.octave.sims <- FALSE
     enable.R.sims <- TRUE
 
-    N <- 25 # number of replications -- set this to something more reasonable, like 1e4
+    N <- 10 # number of replications -- this is intentionally set low for a quick example; set this to something more reasonable in practice, like 1e4
     seed <- 123
     beta1 <- 1.5
     beta2 <- 0.5
