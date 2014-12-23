@@ -1,0 +1,99 @@
+---
+title: My Thesis
+author: Kelsey L. Grantham
+output: md_document
+---
+
+Methods for estimating proportional hazards models that accommodate interval censoring
+====================
+
+```{r echo=FALSE}
+options(width=200) # don't be too eager to wrap text
+```
+
+This is a minimal example of the simulation framework used in my master's thesis. The goal of this code was to provide a flexible platform for performing Monte Carlo simulations to compare several different implementations of Cox regression algorithms. 
+
+The main challenge this software overcomes is that, because these packages are written in different languages (R and MATLAB), there's no simple way to run simulations on each implementation using precisely the same generated datasets for a fair comparison. Instead, generated datasets need to be saved to disk in both R and MATLAB formats, the simulations run, and then the results collated.
+
+The second problem these scripts solve is that, with an ordinary laptop computer, this program would take months and months to run: some of the algorithms are very computationally intensive. These scripts allow the simulations to be run remotely on a high-powered compute server, so that summaries of the results can be downloaded later.
+
+Finally, the compute server that was available did not have a MATLAB licence, so these scripts allow the MATLAB-language algorithms to be run using Octave, an open-source implementation of MATLAB.
+
+Experiments and configuration
+-----------------------------
+
+The framework is designed to allow a large number of experiments to be set up and run, using the same code base. In the paper, comparisons are made between the various techniques at various data sample sizes and censoring proportions.
+
+These different 'experiments' are set up by creating a separate directory for each, and setting the parameters for the experiment in a file named `setup.R`. The parameters common to all experiments are given in a `common_setup.R` file. Here's an example of a `common_setup.R` file that assigns regression coefficients and creates a data generation function.
+
+```{r eval=FALSE}
+# setup file common for all of the simulations
+
+# True/false indicator for running MATLAB/Octave and/or R simulations
+enable.matlab.sims <- FALSE
+enable.octave.sims <- FALSE
+enable.R.sims <- TRUE
+
+N <- 25 # number of replications -- set this to something more reasonable, like 1e4
+seed <- 123
+beta1 <- 1.5
+beta2 <- 0.5
+beta3 <- -0.1
+
+# this function gets passed to the data generation routine
+generate.data <- function() {
+  wblcen(samplesize, c(beta1,beta2,beta3), 3, 2, epct)
+}
+
+# initialize smoothing parameter
+smooth <- 1e-5
+```
+
+And here's an example of a `setup.R` file that specifies the particular sample size and censoring proportion.
+
+```{r eval=FALSE}
+# setup file specific to a particular experiment
+
+epct <- 0 # complete censoring
+samplesize <- 100
+
+source(file.path('example','common_setup.R'))
+```
+
+Limitations
+-----------
+
+This version of the script will not run the MATLAB components, as they are currently unpublished work. The R components will still run, so long as the `common_setup.R` file for the experiment is set up to skip the Matlab/Octave steps.
+
+In the thesis, two sets of simulations were run, covering both partial and complete censoring (not all algorithms could handle partial censoring). For the sake of brevity, code presented here covers just complete censoring.
+
+Set up
+------
+
+To run the code, you'll need R v3 and a bunch of R packages installed, including `R.matlab`, `intcox`, `boot`, `ggplot2`, and `reshape`. These can be downloaded and installed from CRAN by running:
+```{r eval=FALSE}
+install.packages(c('R.matlab','intcox','boot','ggplot2','reshape'))
+```
+You'll also need a version of the `MIICD` package that I've modified. It's available in the same directory as this code, and you can install it by executing the following at the command line:
+```
+> R CMD install MIICD_1.1.tar.gz
+```
+
+If this doesn't work, or if you're using a GUI, you can install the MIICD dependencies and then directly install the package:
+```{r eval=FALSE}
+install.packages(c('mstate','prodlim','cmprsk','riskRegression'))
+install.packages('MIICD_1.1.tar.gz', repos = NULL, type = 'source')
+```
+
+If you're using Windows, you may need to download [Rtools for Windows](http://cran.r-project.org/bin/windows/Rtools/) prior to installing the package.
+
+Running
+-------
+
+To show that it works, we'll run the very simple 'example' experiment provided. It only does 25 replications. Make sure your working directory is this respository's directory, and run:
+```{r eval=FALSE}
+source('simulations_framework.R')
+run.sims('example', 'example_01')
+```
+
+
